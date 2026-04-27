@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S A R A</title>
+<link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant:ital,wght@0,300;1,300;1,400&family=Jost:wght@100;200;300&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-snap-type:y mandatory;overflow-y:scroll;scroll-behavior:smooth}
+body{background:#06080f;color:#f0e8d8;font-family:'Cormorant',serif;cursor:none;overflow-x:hidden}
+
+/* CURSOR */
+#cur{position:fixed;width:6px;height:6px;background:#b8956a;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .3s,height .3s}
+#cur2{position:fixed;width:40px;height:40px;border:1px solid rgba(184,149,106,.3);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:left .12s,top .12s}
+
+/* NOISE OVERLAY */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");opacity:.03;pointer-events:none;z-index:8888}
+
+/* PANEL BASE */
+.panel{min-height:100vh;scroll-snap-align:start;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:40px 24px}
+
+/* =====================
+   PANEL 1 — FILM OPEN
+===================== */
+#p1{background:#06080f}
+.film-strip-top,.film-strip-bot{position:absolute;left:0;right:0;height:48px;background:#000;display:flex;align-items:center;padding:0 8px;gap:8px;z-index:2}
+.film-strip-top{top:0}.film-strip-bot{bottom:0}
+.film-hole{width:22px;height:32px;border-radius:4px;background:#06080f;border:1px solid #1a1a1a;flex-shrink:0}
+
+.film-frame{
+  position:relative;width:min(420px,88vw);aspect-ratio:.75;
+  border:2px solid #1e1e1e;background:#080c14;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:1;overflow:hidden;
+}
+.film-frame::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 30%,rgba(184,149,106,.06),transparent 70%);
+  pointer-events:none;
+}
+.film-scratches{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:.4;
+  background:repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(255,255,255,.008) 3px,rgba(255,255,255,.008) 4px)}
+.film-number{position:absolute;top:8px;left:12px;font-family:'Jost',sans-serif;font-size:9px;letter-spacing:.2em;color:#2a2a2a;font-weight:100}
+.film-number2{position:absolute;top:8px;right:12px;font-family:'Jost',sans-serif;font-size:9px;letter-spacing:.2em;color:#2a2a2a;font-weight:100}
+
+/* Fort inside film frame — SVG ocean scene */
+.fort-scene{width:100%;height:100%;position:absolute;top:0;left:0}
+
+.frame-text{position:relative;z-index:4;text-align:center;padding:0 24px}
+.frame-name{font-family:'Italiana',serif;font-size:clamp(3.5rem,12vw,5.5rem);color:#b8956a;letter-spacing:.15em;opacity:0;animation:filmIn 2s cubic-bezier(.16,1,.3,1) forwards .8s;display:block;line-height:1}
+.frame-place{font-family:'Jost',sans-serif;font-size:clamp(8px,2vw,11px);letter-spacing:.5em;color:rgba(240,232,216,.3);font-weight:100;text-transform:uppercase;margin-top:1.2rem;opacity:0;animation:filmIn 1.5s ease forwards 1.8s}
+@keyframes filmIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+.flicker{animation:flicker 8s infinite 3s}
+@keyframes flicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:.7}94%{opacity:1}96%{opacity:.85}97%{opacity:1}}
+
+/* frame counter below */
+.frame-meta{margin-top:1.5rem;font-family:'Jost',sans-serif;font-size:9px;letter-spacing:.4em;color:rgba(240,232,216,.18);font-weight:100;text-transform:uppercase;opacity:0;animation:filmIn 1s ease forwards 2.6s}
+
+/* scroll cue */
+.cue{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);z-index:5;text-align:center;opacity:0;animation:filmIn 1s ease forwards 3.2s}
+.cue-text{font-family:'Jost',sans-serif;font-size:9px;letter-spacing:.5em;color:rgba(184,149,106,.5);font-weight:100;text-transform:uppercase}
+.cue-bar{width:1px;height:32px;background:linear-gradient(to bottom,rgba(184,149,106,.5),transparent);margin:8px auto 0;animation:barPulse 2s ease-in-out infinite}
+@keyframes barPulse{0%,100%{transform:scaleY(1);opacity:.5}50%{transform:scaleY(1.3);opacity:1}}
+
+/* =====================
+   PANEL 2 — HORIZONTAL SCROLL PARALLAX STORY
+===================== */
+#p2{background:#06080f;padding:0;min-height:100vh;justify-content:flex-start;align-items:flex-start;scroll-snap-align:start;overflow:hidden;position:relative}
+.horiz-track{
+  display:flex;height:100vh;width:max-content;
+  align-items:stretch;
+}
+.horiz-slide{
+  width:100vw;height:100vh;flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0 clamp(24px,8vw,120px);position:relative;overflow:hidden;
+}
+/* vertical golden line separator */
+.horiz-slide::after{
+  content:'';position:absolute;right:0;top:20%;height:60%;width:1px;
+  background:linear-gradient(to bottom,transparent,rgba(184,149,106,.2),transparent);
+}
+.horiz-slide:last-child::after{display:none}
+
+.hs-label{font-family:'Jost',sans-serif;font-size:9px;letter-spacing:.5em;color:rgba(184,149,106,.5);font-weight:100;text-transform:uppercase;margin-bottom:2rem;display:block}
+.hs-big{font-family:'Italiana',serif;font-size:clamp(2.5rem,6vw,5rem);color:#f0e8d8;line-height:1.15;margin-bottom:1.5rem}
+.hs-big em{color:#b8956a;font-style:italic}
+.hs-body{font-family:'Cormorant',serif;font-size:clamp(1.05rem,2vw,1.3rem);font-weight:300;line-height:2;color:rgba(240,232,216,.55);max-width:480px;font-style:italic}
+
+.progress-bar{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;gap:6px;align-items:center}
+.prog-dot{width:4px;height:4px;border-radius:50%;background:rgba(184,149,106,.2);transition:background .4s,transform .4s}
+.prog-dot.active{background:#b8956a;transform:scale(1.4)}
+
+/* =====================
+   PANEL 3 — OCEAN BREATHING
+===================== */
+#p3{background:#06080f;overflow:hidden}
+.ocean-canvas-wrap{position:absolute;inset:0}
+#oceanCanvas{width:100%;height:100%;display:block}
+.ocean-center{position:relative;z-index:2;text-align:center;max-width:600px;padding:0 24px}
+.ocean-word{
+  display:block;font-family:'Italiana',serif;font-size:clamp(3rem,9vw,7rem);
+  color:#b8956a;letter-spacing:.1em;line-height:1;
+  animation:breathe 4s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.02);opacity:1}}
+.ocean-sub{font-family:'Jost',sans-serif;font-size:clamp(9px,1.5vw,12px);letter-spacing:.5em;color:rgba(240,232,216,.3);font-weight:100;text-transform:uppercase;margin-top:2rem;display:block}
+.ocean-quote{font-family:'Cormorant',serif;font-size:clamp(1.1rem,2.5vw,1.6rem);font-style:italic;font-weight:300;color:rgba(240,232,216,.6);margin-top:1.5rem;line-height:1.7;max-width:480px;margin-left:auto;margin-right:auto}
+
+/* =====================
+   PANEL 4 — MAP REVEAL (Murud)
+===================== */
+#p4{background:#06080f}
+.map-outer{
+  width:min(520px,92vw);aspect-ratio:1.1;
+  position:relative;border:1px solid rgba(184,149,106,.12);
+  background:#070a12;overflow:hidden;
+}
+.map-outer::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(184,149,106,.05),transparent 70%)}
+/* SVG map of murud region drawn by hand */
+.map-title-overlay{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  padding:28px;z-index:3;pointer-events:none;
+}
+.map-location-name{font-family:'Italiana',serif;font-size:clamp(1.6rem,5vw,2.8rem);color:#b8956a;letter-spacing:.15em}
+.map-coords{font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.3em;color:rgba(240,232,216,.25);font-weight:100;margin-top:.4rem}
+
+.map-pin{
+  position:absolute;z-index:4;
+  animation:pinPulse 2.5s ease-in-out infinite;
+}
+@keyframes pinPulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.pin-ring{
+  position:absolute;width:32px;height:32px;border:1px solid rgba(184,149,106,.4);border-radius:50%;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  animation:ringExpand 2.5s ease-out infinite;
+}
+.pin-ring2{animation-delay:.8s}
+@keyframes ringExpand{0%{transform:translate(-50%,-50%) scale(1);opacity:.6}100%{transform:translate(-50%,-50%) scale(2.5);opacity:0}}
+
+.map-side{max-width:260px;padding:0 clamp(16px,4vw,48px)}
+.map-side-tag{font-family:'Jost',sans-serif;font-size:9px;letter-spacing:.5em;color:rgba(184,149,106,.5);font-weight:100;text-transform:uppercase;display:block;margin-bottom:1.5rem}
+.map-side-title{font-family:'Italiana',serif;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.2;margin-bottom:1.5rem;color:#f0e8d8}
+.map-side-body{font-family:'Cormorant',serif;font-size:clamp(1rem,1.8vw,1.2rem);font-style:italic;font-weight:300;line-height:1.9;color:rgba(240,232,216,.5)}
+.map-wrap{display:flex;align-items:center;justify-content:center;gap:clamp(16px,4vw,48px);flex-wrap:wrap;width:100%;max-width:860px}
+
+/* =====================
+   PANEL 5 — FILM STRIP MOMENTS
+===================== */
+#p5{background:#06080f;flex-direction:column;gap:0;padding:80px 0}
+.strip-row{
+  display:flex;width:max-content;gap:0;
+  animation:stripScroll 20s linear infinite;
+}
+.strip-row.rev{animation-direction:reverse;animation-duration:25s}
+.strip-wrap{overflow:hidden;width:100vw;margin:0;padding:12px 0;position:relative}
+.strip-wrap::before,.strip-wrap::after{
+  content:'';position:absolute;top:0;bottom:0;width:80px;z-index:2;pointer-events:none;
+}
+.strip-wrap::before{left:0;background:linear-gradient(to right,#06080f,transparent)}
+.strip-wrap::after{right:0;background:linear-gradient(to left,#06080f,transparent)}
+@keyframes stripScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+.strip-cell{
+  width:180px;height:110px;flex-shrink:0;
+  border:1px solid #141414;background:#0a0c14;
+  position:relative;overflow:hidden;margin:0 4px;
+  display:flex;align-items:center;justify-content:center;
+}
+.strip-cell-inner{
+  font-family:'Cormorant',serif;font-size:clamp(.85rem,1.5vw,1rem);
+  font-style:italic;font-weight:300;color:rgba(240,232,216,.45);
+  text-align:center;padding:12px;line-height:1.5;
+}
+.strip-cell-gold{color:rgba(184,149,106,.7)}
+
+.strip-center{position:relative;z-index:5;text-align:center;padding:40px 24px;max-width:600px}
+.strip-center-title{font-family:'Italiana',serif;font-size:clamp(2rem,6vw,4rem);color:#f0e8d8;display:block;margin-bottom:1rem}
+.strip-center-sub{font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.5em;color:rgba(184,149,106,.4);font-weight:100;text-transform:uppercase}
+
+/* =====================
+   PANEL 6 — PERSONAL LETTER (NOT typing — FULL REVEAL on scroll)
+===================== */
+#p6{background:#06080f;align-items:flex-start;padding:80px clamp(20px,8vw,120px)}
+.letter-wrap{max-width:640px;margin:0 auto;width:100%}
+.letter-from{font-family:'Jost',sans-serif;font-size:9px;letter-spacing:.5em;color:rgba(184,149,106,.3);font-weight:100;text-transform:uppercase;margin-bottom:3rem;display:block}
+.letter-body{font-family:'Cormorant',serif;font-size:clamp(1.1rem,2.2vw,1.4rem);font-style:italic;font-weight:300;line-height:2.2;color:rgba(240,232,216,.75)}
+.letter-body p{margin-bottom:1.8rem;opacity:0;transform:translateX(-20px);transition:opacity 1s ease,transform 1s ease}
+.letter-body p.vis{opacity:1;transform:translateX(0)}
+.letter-end{font-family:'Italiana',serif;font-size:clamp(1.5rem,4vw,2.5rem);color:#b8956a;margin-top:2rem;display:block;opacity:0;transition:opacity 1.2s ease 0.8s,transform 1.2s ease 0.8s;transform:translateX(-20px)}
+.letter-end.vis{opacity:1;transform:translateX(0)}
+
+/* =====================
+   PANEL 7 — ENDING: SARA in sea
+===================== */
+#p7{background:#06080f;overflow:hidden}
+#endCanvas{position:absolute;inset:0;width:100%;height:100%}
+.end-content{position:relative;z-index:2;text-align:center}
+.end-sara{font-family:'Italiana',serif;font-size:clamp(5rem,18vw,12rem);color:transparent;-webkit-text-stroke:1px rgba(184,149,106,.4);letter-spacing:.2em;display:block;line-height:1;animation:endPulse 6s ease-in-out infinite}
+@keyframes endPulse{0%,100%{-webkit-text-stroke-color:rgba(184,149,106,.3)}50%{-webkit-text-stroke-color:rgba(184,149,106,.7)}}
+.end-line{width:80px;height:1px;background:rgba(184,149,106,.3);margin:2rem auto}
+.end-quote{font-family:'Cormorant',serif;font-size:clamp(1rem,2.5vw,1.4rem);font-style:italic;font-weight:300;color:rgba(240,232,216,.45);max-width:480px;line-height:1.9}
+.end-arabic{font-size:clamp(1.5rem,4vw,2.5rem);color:rgba(184,149,106,.2);margin-top:2rem;display:block;font-family:serif;letter-spacing:.1em}
+
+/* PROGRESS INDICATOR */
+.side-nav{position:fixed;right:24px;top:50%;transform:translateY(-50%);z-index:100;display:flex;flex-direction:column;gap:10px}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:rgba(184,149,106,.15);transition:all .4s;cursor:pointer}
+.nav-dot.active{background:#b8956a;height:16px;border-radius:2px}
+
+@media(max-width:600px){.side-nav{right:12px}.map-wrap{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur2"></div>
+
+<!-- Side nav -->
+<nav class="side-nav" id="sideNav">
+  <div class="nav-dot active" onclick="goPanel(0)"></div>
+  <div class="nav-dot" onclick="goPanel(1)"></div>
+  <div class="nav-dot" onclick="goPanel(2)"></div>
+  <div class="nav-dot" onclick="goPanel(3)"></div>
+  <div class="nav-dot" onclick="goPanel(4)"></div>
+  <div class="nav-dot" onclick="goPanel(5)"></div>
+  <div class="nav-dot" onclick="goPanel(6)"></div>
+</nav>
+
+<!-- ======================== PANEL 1: FILM OPEN ======================== -->
+<section class="panel" id="p1">
+  <div class="film-strip-top" id="ftop"></div>
+  <div class="film-frame flicker">
+    <div class="film-scratches"></div>
+    <div class="film-number">A — 001</div>
+    <div class="film-number2">MURUD · 2024</div>
+    <!-- Ocean fort scene inside frame -->
+    <svg class="fort-scene" viewBox="0 0 420 560" xmlns="http://www.w3.org/2000/svg" fill="none" preserveAspectRatio="xMidYMid slice">
+      <!-- Sky gradient -->
+      <defs>
+        <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#03060e"/>
+          <stop offset="60%" stop-color="#0a1628"/>
+          <stop offset="100%" stop-color="#0d2040"/>
+        </linearGradient>
+        <linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0d2040"/>
+          <stop offset="100%" stop-color="#050d1a"/>
+        </linearGradient>
+        <radialGradient id="moonG" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#f0e8d8" stop-opacity=".9"/>
+          <stop offset="100%" stop-color="#f0e8d8" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="glow2"><feGaussianBlur stdDeviation="4" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
+      </defs>
+      <rect width="420" height="560" fill="url(#skyG)"/>
+      <!-- Moon -->
+      <circle cx="320" cy="80" r="28" fill="url(#moonG)" opacity=".6" filter="url(#glow2)"/>
+      <circle cx="320" cy="80" r="14" fill="#f0e8d8" opacity=".15"/>
+      <!-- Stars in sky -->
+      <circle cx="60" cy="40" r="1" fill="#f0e8d8" opacity=".6"/><circle cx="140" cy="25" r=".8" fill="#f0e8d8" opacity=".5"/><circle cx="200" cy="55" r="1.2" fill="#f0e8d8" opacity=".4"/><circle cx="80" cy="90" r=".7" fill="#f0e8d8" opacity=".5"/><circle cx="170" cy="70" r="1" fill="#f0e8d8" opacity=".3"/><circle cx="350" cy="30" r=".9" fill="#f0e8d8" opacity=".4"/><circle cx="390" cy="70" r=".7" fill="#f0e8d8" opacity=".3"/><circle cx="40" cy="120" r=".8" fill="#f0e8d8" opacity=".3"/>
+      <!-- Sea -->
+      <rect x="0" y="360" width="420" height="200" fill="url(#seaG)"/>
+      <!-- Moon reflection on water -->
+      <ellipse cx="320" cy="380" rx="18" ry="60" fill="rgba(240,232,216,.04)"/>
+      <!-- Water lines -->
+      <line x1="0" y1="365" x2="420" y2="367" stroke="rgba(184,149,106,.12)" stroke-width="1"/>
+      <line x1="0" y1="380" x2="420" y2="382" stroke="rgba(13,50,90,.6)" stroke-width="1"/>
+      <line x1="0" y1="395" x2="420" y2="397" stroke="rgba(184,149,106,.06)" stroke-width="1"/>
+      <line x1="0" y1="415" x2="420" y2="413" stroke="rgba(13,50,90,.4)" stroke-width="1"/>
+      <!-- Island base -->
+      <ellipse cx="210" cy="368" rx="145" ry="20" fill="#05101f"/>
+      <!-- Fort main walls -->
+      <rect x="80" y="240" width="260" height="135" fill="#060e1c"/>
+      <!-- Wall texture lines -->
+      <line x1="80" y1="270" x2="340" y2="270" stroke="rgba(184,149,106,.06)" stroke-width=".5"/>
+      <line x1="80" y1="300" x2="340" y2="300" stroke="rgba(184,149,106,.06)" stroke-width=".5"/>
+      <line x1="80" y1="330" x2="340" y2="330" stroke="rgba(184,149,106,.06)" stroke-width=".5"/>
+      <!-- Battlements -->
+      <rect x="80" y="232" width="18" height="14" fill="#060e1c"/><rect x="104" y="232" width="18" height="14" fill="#060e1c"/><rect x="128" y="232" width="18" height="14" fill="#060e1c"/><rect x="152" y="232" width="18" height="14" fill="#060e1c"/><rect x="176" y="232" width="18" height="14" fill="#060e1c"/><rect x="200" y="232" width="18" height="14" fill="#060e1c"/><rect x="224" y="232" width="18" height="14" fill="#060e1c"/><rect x="248" y="232" width="18" height="14" fill="#060e1c"/><rect x="272" y="232" width="18" height="14" fill="#060e1c"/><rect x="296" y="232" width="18" height="14" fill="#060e1c"/><rect x="320" y="232" width="18" height="14" fill="#060e1c"/>
+      <!-- Towers -->
+      <rect x="60" y="190" width="44" height="185" fill="#050c1a"/>
+      <rect x="316" y="190" width="44" height="185" fill="#050c1a"/>
+      <rect x="170" y="165" width="36" height="210" fill="#050c1a"/>
+      <rect x="214" y="165" width="36" height="210" fill="#050c1a"/>
+      <!-- Tower battlements -->
+      <rect x="60" y="183" width="10" height="10" fill="#050c1a"/><rect x="74" y="183" width="10" height="10" fill="#050c1a"/><rect x="88" y="183" width="10" height="10" fill="#050c1a"/>
+      <rect x="316" y="183" width="10" height="10" fill="#050c1a"/><rect x="330" y="183" width="10" height="10" fill="#050c1a"/><rect x="344" y="183" width="10" height="10" fill="#050c1a"/>
+      <rect x="170" y="158" width="10" height="10" fill="#050c1a"/><rect x="184" y="158" width="10" height="10" fill="#050c1a"/><rect x="198" y="158" width="10" height="10" fill="#050c1a"/>
+      <rect x="214" y="158" width="10" height="10" fill="#050c1a"/><rect x="228" y="158" width="10" height="10" fill="#050c1a"/><rect x="242" y="158" width="10" height="10" fill="#050c1a"/>
+      <!-- Gate -->
+      <path d="M185 375 L185 305 Q210 285 235 305 L235 375 Z" fill="#030810"/>
+      <!-- Cannon silhouettes -->
+      <rect x="88" y="280" width="28" height="7" rx="3.5" fill="#0a1525" opacity=".8"/>
+      <rect x="302" y="280" width="28" height="7" rx="3.5" fill="#0a1525" opacity=".8"/>
+      <!-- Golden glow on top of center tower -->
+      <ellipse cx="232" cy="162" rx="24" ry="6" fill="rgba(184,149,106,.08)"/>
+      <!-- Flag post -->
+      <line x1="232" y1="165" x2="232" y2="130" stroke="rgba(184,149,106,.3)" stroke-width="1"/>
+      <polygon points="232,130 248,138 232,146" fill="rgba(184,149,106,.3)"/>
+      <!-- Boat silhouette -->
+      <path d="M30 358 Q50 350 70 358 L65 368 L35 368 Z" fill="#040912" opacity=".7"/>
+      <line x1="50" y1="350" x2="50" y2="335" stroke="#040912" stroke-width="1" opacity=".5"/>
+    </svg>
+    <div class="frame-text">
+      <span class="frame-name">SARA</span>
+      <span class="frame-place">Murud Janjira · Rajpur · Arabian Sea</span>
+    </div>
+  </div>
+  <div class="frame-meta">Frame 001 &nbsp;·&nbsp; A Love Story &nbsp;·&nbsp; Directed by the Sea</div>
+  <div class="cue">
+    <span class="cue-text">Begin</span>
+    <div class="cue-bar"></div>
+  </div>
+  <div class="film-strip-bot" id="fbot"></div>
+</section>
+
+<!-- ======================== PANEL 2: HORIZONTAL SLIDES ======================== -->
+<section class="panel" id="p2">
+  <div class="horiz-track" id="horizTrack">
+    <div class="horiz-slide">
+      <span class="hs-label">Chapter One</span>
+      <h2 class="hs-big">The girl who lives<br>where the <em>sea</em><br>never sleeps.</h2>
+      <p class="hs-body">Murud Janjira — a coastline that has watched empires rise and fall, where the Arabian Sea crashes against 500-year-old stone every single night, and still the fort stands.</p>
+      <div class="progress-bar"><div class="prog-dot active"></div><div class="prog-dot"></div><div class="prog-dot"></div><div class="prog-dot"></div></div>
+    </div>
+    <div class="horiz-slide">
+      <span class="hs-label">Chapter Two</span>
+      <h2 class="hs-big">She was born<br>into <em>something</em><br>unconquerable.</h2>
+      <p class="hs-body">Every army that tried to take Janjira — the Marathas, the Mughals, the Portuguese, the British — every single one failed. The fort stayed itself. She has that same quality.</p>
+      <div class="progress-bar"><div class="prog-dot"></div><div class="prog-dot active"></div><div class="prog-dot"></div><div class="prog-dot"></div></div>
+    </div>
+    <div class="horiz-slide">
+      <span class="hs-label">Chapter Three</span>
+      <h2 class="hs-big">You reach her<br>by <em>water.</em><br>There is no other way.</h2>
+      <p class="hs-body">From Rajpur, you take a small boat across the open water. The gate only reveals itself when you are close enough. That is how you enter Janjira. That is how you enter Sara.</p>
+      <div class="progress-bar"><div class="prog-dot"></div><div class="prog-dot"></div><div class="prog-dot active"></div><div class="prog-dot"></div></div>
+    </div>
+    <div class="horiz-slide">
+      <span class="hs-label">Chapter Four</span>
+      <h2 class="hs-big">Inside the walls —<br><em>freshwater.</em><br>Surrounded by the sea.</h2>
+      <p class="hs-body">Inside Janjira, in the middle of the saltwater ocean, there are freshwater tanks. Calm. Clean. Quiet. That softness hidden inside something that the whole world calls unbreakable — that is her too.</p>
+      <div class="progress-bar"><div class="prog-dot"></div><div class="prog-dot"></div><div class="prog-dot"></div><div class="prog-dot active"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== PANEL 3: OCEAN BREATHING ======================== -->
+<section class="panel" id="p3">
+  <canvas id="oceanCanvas"></canvas>
+  <div class="ocean-center">
+    <span class="ocean-word">SARA</span>
+    <span class="ocean-sub">Murud · Arabian Sea · Maharashtra</span>
+    <p class="ocean-quote">"Janjira" is the Arabic word for island — <em>jazira.</em> A land that belongs only to itself. Surrounded on all sides. Complete.</p>
+  </div>
+</section>
+
+<!-- ======================== PANEL 4: MAP ======================== -->
+<section class="panel" id="p4">
+  <div class="map-wrap">
+    <div class="map-outer">
+      <!-- Hand-drawn SVG map of Murud Janjira coastline -->
+      <svg width="100%" height="100%" viewBox="0 0 520 480" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <defs>
+          <filter id="mapBlur"><feGaussianBlur stdDeviation="1"/></filter>
+        </defs>
+        <!-- Sea background -->
+        <rect width="520" height="480" fill="#050d1c"/>
+        <!-- Depth lines -->
+        <path d="M0 100 Q260 90 520 105" stroke="rgba(184,149,106,.04)" stroke-width="1"/>
+        <path d="M0 150 Q260 140 520 155" stroke="rgba(184,149,106,.03)" stroke-width="1"/>
+        <path d="M0 200 Q260 195 520 200" stroke="rgba(184,149,106,.03)" stroke-width="1"/>
+        <!-- Coastline mainland -->
+        <path d="M320 0 L340 20 L360 45 L370 80 L380 120 L390 160 L400 210 L395 260 L380 300 L370 340 L360 380 L355 420 L350 460 L350 480 L520 480 L520 0 Z"
+          fill="#0b1628" stroke="rgba(184,149,106,.15)" stroke-width=".8"/>
+        <!-- Rajpur town area -->
+        <circle cx="368" cy="240" r="4" fill="rgba(184,149,106,.4)"/>
+        <circle cx="368" cy="240" r="10" fill="rgba(184,149,106,.06)"/>
+        <!-- Rajpur label -->
+        <text x="378" y="238" font-family="Jost,sans-serif" font-size="8" fill="rgba(184,149,106,.5)" letter-spacing="2" font-weight="100">RAJPUR</text>
+        <!-- Murud town -->
+        <circle cx="375" cy="190" r="3" fill="rgba(184,149,106,.3)"/>
+        <text x="382" y="188" font-family="Jost,sans-serif" font-size="7" fill="rgba(184,149,106,.4)" letter-spacing="2" font-weight="100">MURUD</text>
+        <!-- Boat path dotted line from Rajpur to Fort -->
+        <path d="M362 240 Q300 230 240 248" stroke="rgba(184,149,106,.2)" stroke-width=".8" stroke-dasharray="3 4"/>
+        <!-- Fort island -->
+        <ellipse cx="220" cy="255" rx="55" ry="40" fill="#0e1c30" stroke="rgba(184,149,106,.2)" stroke-width=".8"/>
+        <!-- Fort details on map -->
+        <rect x="200" y="238" width="40" height="32" fill="#0a1525" rx="1"/>
+        <rect x="197" y="235" width="8" height="10" fill="#0a1525"/>
+        <rect x="235" y="235" width="8" height="10" fill="#0a1525"/>
+        <rect x="212" y="228" width="16" height="14" fill="#091422"/>
+        <!-- Golden pin on fort -->
+        <circle cx="220" cy="251" r="5" fill="#b8956a" opacity=".8"/>
+        <circle cx="220" cy="251" r="2" fill="#f0e8d8"/>
+        <!-- Fort label -->
+        <text x="220" y="310" font-family="Italiana,serif" font-size="11" fill="rgba(184,149,106,.6)" letter-spacing="2" text-anchor="middle">JANJIRA FORT</text>
+        <!-- Arabian Sea label -->
+        <text x="130" y="400" font-family="Jost,sans-serif" font-size="9" fill="rgba(240,232,216,.08)" letter-spacing="4" font-weight="100" text-anchor="middle">ARABIAN SEA</text>
+        <!-- Compass -->
+        <g transform="translate(60,60)">
+          <line x1="0" y1="-18" x2="0" y2="18" stroke="rgba(184,149,106,.2)" stroke-width=".8"/>
+          <line x1="-18" y1="0" x2="18" y2="0" stroke="rgba(184,149,106,.2)" stroke-width=".8"/>
+          <polygon points="0,-18 3,-8 0,-12 -3,-8" fill="rgba(184,149,106,.4)"/>
+          <text x="0" y="-22" font-family="Jost,sans-serif" font-size="7" fill="rgba(184,149,106,.4)" text-anchor="middle" font-weight="100">N</text>
+        </g>
+        <!-- Scale bar -->
+        <line x1="40" y1="440" x2="120" y2="440" stroke="rgba(184,149,106,.2)" stroke-width=".8"/>
+        <text x="80" y="453" font-family="Jost,sans-serif" font-size="7" fill="rgba(184,149,106,.25)" text-anchor="middle" font-weight="100">10 km</text>
+      </svg>
+      <div class="map-title-overlay">
+        <div class="map-location-name">Murud Janjira</div>
+        <div class="map-coords">18.3167° N &nbsp;·&nbsp; 72.9667° E</div>
+      </div>
+      <!-- Pin pulse at fort location -->
+      <div class="map-pin" style="left:42%;top:53%">
+        <div class="pin-ring"></div>
+        <div class="pin-ring pin-ring2"></div>
+      </div>
+    </div>
+    <div class="map-side">
+      <span class="map-side-tag">Her Address in the World</span>
+      <h3 class="map-side-title">A dot on the map that means everything to me.</h3>
+      <p class="map-side-body">18.3167° N, 72.9667° E. That's where she is right now. That's where the sea is tonight. That's where I'd go if I could go anywhere in the world.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== PANEL 5: FILM STRIPS ======================== -->
+<section class="panel" id="p5">
+  <!-- Film strip row 1 -->
+  <div class="strip-wrap">
+    <div class="strip-row" id="sr1">
+      <div class="strip-cell"><div class="strip-cell-inner">The way she makes ordinary days feel <span class="strip-cell-gold">different</span></div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">Born where fishermen leave at <span class="strip-cell-gold">dawn</span></div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">The fort that <span class="strip-cell-gold">never fell</span></div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">Her voice that lives in my <span class="strip-cell-gold">chest</span></div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">The Arabian Sea <span class="strip-cell-gold">outside her window</span></div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">Softness that the world <span class="strip-cell-gold">hasn't broken</span></div></div>
+      <!-- duplicated for seamless loop -->
+      <div class="strip-cell"><div class="strip-cell-inner">The way she makes ordinary days feel <span class="strip-cell-gold">different</span></div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">Born where fishermen leave at <span class="strip-cell-gold">dawn</span></div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">The fort that <span class="strip-cell-gold">never fell</span></div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">Her voice that lives in my <span class="strip-cell-gold">chest</span></div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">The Arabian Sea <span class="strip-cell-gold">outside her window</span></div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">Softness that the world <span class="strip-cell-gold">hasn't broken</span></div></div>
+    </div>
+  </div>
+
+  <div class="strip-center">
+    <span class="strip-center-title">Small Frames.<br>Big Feelings.</span>
+    <span class="strip-center-sub">Every moment with her, preserved.</span>
+  </div>
+
+  <!-- Film strip row 2 -->
+  <div class="strip-wrap">
+    <div class="strip-row rev" id="sr2">
+      <div class="strip-cell"><div class="strip-cell-inner"><span class="strip-cell-gold">500 years</span> the walls stood</div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">A gate that only <span class="strip-cell-gold">reveals itself</span> up close</div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">Freshwater <span class="strip-cell-gold">inside</span> the salt sea</div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">The boat from <span class="strip-cell-gold">Rajpur</span> jetty</div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">Her laugh at <span class="strip-cell-gold">midnight</span></div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">The silence that <span class="strip-cell-gold">feels like home</span></div></div>
+      <!-- duplicated -->
+      <div class="strip-cell"><div class="strip-cell-inner"><span class="strip-cell-gold">500 years</span> the walls stood</div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">A gate that only <span class="strip-cell-gold">reveals itself</span> up close</div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">Freshwater <span class="strip-cell-gold">inside</span> the salt sea</div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">The boat from <span class="strip-cell-gold">Rajpur</span> jetty</div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">Her laugh at <span class="strip-cell-gold">midnight</span></div></div>
+      <div class="strip-cell"><div class="strip-cell-inner">The silence that <span class="strip-cell-gold">feels like home</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== PANEL 6: LETTER REVEAL ======================== -->
+<section class="panel" id="p6">
+  <div class="letter-wrap">
+    <span class="letter-from">A Letter &nbsp;·&nbsp; For Sara &nbsp;·&nbsp; From Someone Far Away</span>
+    <div class="letter-body" id="letterBody">
+      <p>Sara —</p>
+      <p>I looked up Murud Janjira. I read about the fort, the sea, the boats from Rajpur jetty, the 500-year-old walls that no army ever broke through. And I kept thinking — of course. Of course she's from there.</p>
+      <p>There's something in you that I couldn't name for a long time. A stillness. A kind of quiet that doesn't feel empty — it feels full. Like the inside of that fort with its freshwater tanks, calm and clean while the whole ocean rages outside.</p>
+      <p>I didn't plan any of this. I didn't plan you.</p>
+      <p>But here you are — a girl from a place where the sea never stops and the walls never fell — and somehow you've made this distance feel smaller than it is.</p>
+      <p>I hope tonight the water is calm where you are. I hope the air smells like the sea. I hope you know, wherever I am, I'm thinking about that small dot on the map. Your dot.</p>
+    </div>
+    <span class="letter-end" id="letterEnd">— Yours, from far too far away.</span>
+  </div>
+</section>
+
+<!-- ======================== PANEL 7: END ======================== -->
+<section class="panel" id="p7">
+  <canvas id="endCanvas"></canvas>
+  <div class="end-content">
+    <span class="end-sara">SARA</span>
+    <div class="end-line"></div>
+    <p class="end-quote">Janjira never fell. Not once. Not to anyone.<br>And neither has she — not to anything this world has thrown at her.<br><br>But she fell a little, softly, quietly,<br><em>for this.</em></p>
+    <span class="end-arabic">جزيرة &nbsp;·&nbsp; ساره</span>
+  </div>
+</section>
+
+<script>
+// CURSOR
+const cur=document.getElementById('cur'),cur2=document.getElementById('cur2');
+let mx=0,my=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cur.style.left=mx+'px';cur.style.top=my+'px';
+  setTimeout(()=>{cur2.style.left=mx+'px';cur2.style.top=my+'px'},80);
+});
+
+// FILM HOLES
+['ftop','fbot'].forEach(id=>{
+  const el=document.getElementById(id);
+  for(let i=0;i<24;i++){const d=document.createElement('div');d.className='film-hole';el.appendChild(d);}
+});
+
+// PANELS & NAV
+const panels=['p1','p2','p3','p4','p5','p6','p7'];
+const dots=document.querySelectorAll('.nav-dot');
+function goPanel(i){document.getElementById(panels[i]).scrollIntoView({behavior:'smooth'})}
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const i=panels.indexOf(e.target.id);
+      if(i>=0){dots.forEach((d,j)=>d.classList.toggle('active',j===i));}
+      // letter reveal
+      if(e.target.id==='p6') revealLetter();
+      // end canvas
+      if(e.target.id==='p7') startEndCanvas();
+    }
+  });
+},{threshold:.4});
+panels.forEach(id=>io.observe(document.getElementById(id)));
+
+// OCEAN CANVAS (panel 3)
+const oc=document.getElementById('oceanCanvas');
+const octx=oc.getContext('2d');
+let waves=[];
+function resizeOC(){oc.width=oc.offsetWidth;oc.height=oc.offsetHeight;initWaves();}
+function initWaves(){
+  waves=[];
+  for(let i=0;i<6;i++){
+    waves.push({y:oc.height*(0.4+i*0.1),amp:8+i*3,freq:0.008-i*0.001,phase:i*1.2,speed:0.004+i*0.001,alpha:0.06-i*0.008});
+  }
+}
+let ot=0;
+function drawOcean(){
+  octx.clearRect(0,0,oc.width,oc.height);
+  // Deep sea gradient bg
+  const g=octx.createLinearGradient(0,0,0,oc.height);
+  g.addColorStop(0,'#06080f');g.addColorStop(1,'#0a1828');
+  octx.fillStyle=g;octx.fillRect(0,0,oc.width,oc.height);
+  // Waves
+  waves.forEach(w=>{
+    octx.beginPath();
+    octx.moveTo(0,w.y);
+    for(let x=0;x<=oc.width;x+=4){
+      const y=w.y+Math.sin(x*w.freq+w.phase+ot*w.speed)*w.amp;
+      octx.lineTo(x,y);
+    }
+    octx.lineTo(oc.width,oc.height);octx.lineTo(0,oc.height);octx.closePath();
+    octx.fillStyle=`rgba(13,32,64,${w.alpha})`;octx.fill();
+    octx.beginPath();
+    for(let x=0;x<=oc.width;x+=4){
+      const y=w.y+Math.sin(x*w.freq+w.phase+ot*w.speed)*w.amp;
+      x===0?octx.moveTo(x,y):octx.lineTo(x,y);
+    }
+    octx.strokeStyle=`rgba(184,149,106,${w.alpha*0.8})`;octx.lineWidth=.8;octx.stroke();
+  });
+  ot++;
+  requestAnimationFrame(drawOcean);
+}
+window.addEventListener('resize',resizeOC);
+resizeOC();drawOcean();
+
+// LETTER REVEAL
+let letterDone=false;
+function revealLetter(){
+  if(letterDone)return;letterDone=true;
+  const ps=document.querySelectorAll('#letterBody p');
+  ps.forEach((p,i)=>{setTimeout(()=>p.classList.add('vis'),300+i*400);});
+  setTimeout(()=>document.getElementById('letterEnd').classList.add('vis'),300+ps.length*400+200);
+}
+
+// END CANVAS — wave + particles
+const ec=document.getElementById('endCanvas');
+const ectx=ec.getContext('2d');
+let endStarted=false,particles=[];
+function startEndCanvas(){
+  if(endStarted)return;endStarted=true;
+  ec.width=ec.offsetWidth;ec.height=ec.offsetHeight;
+  for(let i=0;i<60;i++){
+    particles.push({x:Math.random()*ec.width,y:Math.random()*ec.height,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,alpha:Math.random()*.4+.1});
+  }
+  drawEnd();
+}
+let et=0;
+function drawEnd(){
+  ectx.clearRect(0,0,ec.width,ec.height);
+  // Radial glow center
+  const g=ectx.createRadialGradient(ec.width/2,ec.height/2,0,ec.width/2,ec.height/2,ec.width*.6);
+  g.addColorStop(0,'rgba(184,149,106,.05)');g.addColorStop(1,'transparent');
+  ectx.fillStyle=g;ectx.fillRect(0,0,ec.width,ec.height);
+  // Wave at bottom
+  ectx.beginPath();ectx.moveTo(0,ec.height*.75);
+  for(let x=0;x<=ec.width;x+=3){
+    const y=ec.height*.75+Math.sin(x*.012+et*.02)*12+Math.sin(x*.005+et*.015)*18;
+    ectx.lineTo(x,y);
+  }
+  ectx.lineTo(ec.width,ec.height);ectx.lineTo(0,ec.height);ectx.closePath();
+  ectx.fillStyle='rgba(13,28,50,.3)';ectx.fill();
+  // Particles
+  particles.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0)p.x=ec.width;if(p.x>ec.width)p.x=0;
+    if(p.y<0)p.y=ec.height;if(p.y>ec.height)p.y=0;
+    const a=p.alpha*(0.5+0.5*Math.sin(et*.03+p.x));
+    ectx.beginPath();ectx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ectx.fillStyle=`rgba(184,149,106,${a})`;ectx.fill();
+  });
+  et++;
+  if(endStarted)requestAnimationFrame(drawEnd);
+}
+
+// HORIZONTAL SCROLL (panel 2) — wheel hijack
+const p2=document.getElementById('p2');
+const track=document.getElementById('horizTrack');
+let hScroll=0,maxHScroll=0,inP2=false,scrollLock=false;
+const p2io=new IntersectionObserver(e=>{inP2=e[0].isIntersecting&&e[0].intersectionRatio>.7},{threshold:.7});
+p2io.observe(p2);
+function updateMaxH(){maxHScroll=track.scrollWidth-window.innerWidth;}
+window.addEventListener('resize',updateMaxH);setTimeout(updateMaxH,300);
+window.addEventListener('wheel',e=>{
+  if(!inP2)return;
+  const atStart=hScroll<=0&&e.deltaY<0;
+  const atEnd=hScroll>=maxHScroll&&e.deltaY>0;
+  if(atStart||atEnd)return;
+  e.preventDefault();
+  hScroll=Math.max(0,Math.min(maxHScroll,hScroll+e.deltaY*1.2));
+  track.style.transform=`translateX(-${hScroll}px)`;
+  // update progress dots
+  const prog=hScroll/maxHScroll;
+  const slide=Math.round(prog*3);
+  document.querySelectorAll('.prog-dot').forEach((d,i)=>d.classList.toggle('active',i===slide));
+},{passive:false});
+</script>
+</body>
+</html>
